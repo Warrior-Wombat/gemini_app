@@ -1,0 +1,9 @@
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'gcr.io/sayspeak/middleware:$SHORT_SHA', './middleware']
+
+images:
+- 'gcr.io/sayspeak/middleware:$SHORT_SHA'
