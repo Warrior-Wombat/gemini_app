@@ -13,8 +13,8 @@ workflows:
         script: flutter test
       - name: Build APK
         script: flutter build apk --release
-      # - name: Build iOS
-      #   script: flutter build ios --release --no-codesign
+      - name: Build iOS
+        script: flutter build ios --release --no-codesign
     artifacts:
       - build/app/outputs/flutter-apk/app-release.apk
       - build/ios/ipa/*.ipa
