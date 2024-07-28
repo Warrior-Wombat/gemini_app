@@ -47,3 +47,4 @@ frontend/assets/credentials
 
 # MIDDLEWARE
 middleware/venv
+middleware/.env

@@ -1,12 +1,5 @@
-from fastapi import FastAPI
+from app import app
 import uvicorn
-import os
-
-app = FastAPI()
-
-@app.get("/")
-async def read_root():
-    return {"Hello": "Wrld"}
 
 if __name__ == "__main__":
     port = 8080
