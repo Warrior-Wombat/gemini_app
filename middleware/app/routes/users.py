@@ -43,16 +43,13 @@ async def register(user: User, id_token: str = Header(None)):
         raise HTTPException(status_code=400, detail="ID token is required")
     
     try:
-        # Verify the ID token
         decoded_token = auth.verify_id_token(id_token)
         uid = decoded_token['uid']
-        
-        # Check if user already exists
+
         user_doc = db.collection('users').document(uid).get()
         if user_doc.exists:
             raise HTTPException(status_code=400, detail="User already registered")
-        
-        # Create user document in Firestore
+
         user_data = {
             "username": user.username,
             "social_login_type": user.social_login_type or decoded_token.get('firebase', {}).get('sign_in_provider')
