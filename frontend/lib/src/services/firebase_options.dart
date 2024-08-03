@@ -41,49 +41,50 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyAeTtQQW-tgbFgDKwt5_scQ0jXIg_cGqSA',
-    appId: '1:847075157501:web:526d795145bf0fdb6a6594',
-    messagingSenderId: '847075157501',
-    projectId: 'gemini-app-ba066',
-    authDomain: 'gemini-app-ba066.firebaseapp.com',
-    storageBucket: 'gemini-app-ba066.appspot.com',
-    measurementId: 'G-XDHPGN626M',
+    apiKey: 'AIzaSyA6qD1XQZ4xY4PcQQkqGY4TuEdXYFP69ac',
+    appId: '1:619295303737:web:46478d292d9cfa614785e8',
+    messagingSenderId: '619295303737',
+    projectId: 'gemini-app-428709',
+    authDomain: 'gemini-app-428709.firebaseapp.com',
+    storageBucket: 'gemini-app-428709.appspot.com',
+    measurementId: 'G-WSY2NW7BYY',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDcIhwoUCAlp2Zo9_RkBC_Ml_FpRdYqYe0',
-    appId: '1:847075157501:android:ca5f0562cb1a5e7e6a6594',
-    messagingSenderId: '847075157501',
-    projectId: 'gemini-app-ba066',
-    storageBucket: 'gemini-app-ba066.appspot.com',
+    apiKey: 'AIzaSyAOdojRnGkh84ruoudo4s4zUUajo9PD_yY',
+    appId: '1:619295303737:android:8122a9ab062fc1454785e8',
+    messagingSenderId: '619295303737',
+    projectId: 'gemini-app-428709',
+    storageBucket: 'gemini-app-428709.appspot.com',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyDEXSrf7vvMnfD5kZX91jpsa2OV1pb8GVw',
-    appId: '1:847075157501:ios:f2aaa245c9d1076a6a6594',
-    messagingSenderId: '847075157501',
-    projectId: 'gemini-app-ba066',
-    storageBucket: 'gemini-app-ba066.appspot.com',
+    apiKey: 'AIzaSyBThPmlC0_pdWRkXRUClnOFZloCBR5UUDs',
+    appId: '1:619295303737:ios:3ac3bf9daa30d9ea4785e8',
+    messagingSenderId: '619295303737',
+    projectId: 'gemini-app-428709',
+    storageBucket: 'gemini-app-428709.appspot.com',
+    iosClientId: '619295303737-8p7sratgt116429uo4tgig6pib3q7vr6.apps.googleusercontent.com',
     iosBundleId: 'com.example.geminiApp',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyDEXSrf7vvMnfD5kZX91jpsa2OV1pb8GVw',
-    appId: '1:847075157501:ios:f2aaa245c9d1076a6a6594',
-    messagingSenderId: '847075157501',
-    projectId: 'gemini-app-ba066',
-    storageBucket: 'gemini-app-ba066.appspot.com',
+    apiKey: 'AIzaSyBThPmlC0_pdWRkXRUClnOFZloCBR5UUDs',
+    appId: '1:619295303737:ios:3ac3bf9daa30d9ea4785e8',
+    messagingSenderId: '619295303737',
+    projectId: 'gemini-app-428709',
+    storageBucket: 'gemini-app-428709.appspot.com',
+    iosClientId: '619295303737-8p7sratgt116429uo4tgig6pib3q7vr6.apps.googleusercontent.com',
     iosBundleId: 'com.example.geminiApp',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyAeTtQQW-tgbFgDKwt5_scQ0jXIg_cGqSA',
-    appId: '1:847075157501:web:662c9bde88f2752a6a6594',
-    messagingSenderId: '847075157501',
-    projectId: 'gemini-app-ba066',
-    authDomain: 'gemini-app-ba066.firebaseapp.com',
-    storageBucket: 'gemini-app-ba066.appspot.com',
-    measurementId: 'G-8ZVTJ471MZ',
+    apiKey: 'AIzaSyA6qD1XQZ4xY4PcQQkqGY4TuEdXYFP69ac',
+    appId: '1:619295303737:web:95248f817b6d0e134785e8',
+    messagingSenderId: '619295303737',
+    projectId: 'gemini-app-428709',
+    authDomain: 'gemini-app-428709.firebaseapp.com',
+    storageBucket: 'gemini-app-428709.appspot.com',
+    measurementId: 'G-G38TP0N71V',
   );
-
 }

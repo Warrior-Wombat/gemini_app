@@ -44,6 +44,7 @@ frontend/android/app/release
 
 # config and env stuff
 frontend/assets/credentials
+frontend/.env
 
 # MIDDLEWARE
 middleware/venv

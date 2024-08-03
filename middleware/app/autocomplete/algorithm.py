@@ -18,6 +18,3 @@ def run_session(user_id: str):
         print("Current conversation:", ' '.join(session.conversation_history))
     
     session.save_user_data()
-
-if __name__ == "__main__":
-    run_session("example_user_id")

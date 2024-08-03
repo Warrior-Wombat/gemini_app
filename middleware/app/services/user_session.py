@@ -1,7 +1,7 @@
 import logging
 from typing import List, Tuple
 from firebase_admin import firestore
-from app.services.gemini_predictor import GeminiPredictor
+from app.services.gemini_prediction import GeminiPredictor
 from io import BytesIO
 import pyaudio
 import wave

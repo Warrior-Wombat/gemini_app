@@ -1,7 +1,7 @@
 from fastapi import APIRouter, UploadFile, File, Depends
 from typing import List
 from app.services.user_session import User
-from app.config import db
+from app.services.config import db
 from io import BytesIO
 
 router = APIRouter()

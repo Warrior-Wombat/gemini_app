@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../components/auth_button.dart';
 import '../services/auth_service.dart';
+import 'prediction_screen.dart';
 import 'signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -21,14 +22,26 @@ class _LoginScreenState extends State<LoginScreen> {
       isLoading = true;
     });
 
-    // Simulate a login process
-    await Future.delayed(Duration(seconds: 2));
-
-    setState(() {
-      isLoading = false;
-    });
-
-    // Implement your login logic here
+    try {
+      final user = await authService.signInWithEmailAndPassword(
+        emailController.text,
+        passwordController.text,
+      );
+      if (user != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => PredictionScreen()),
+        );
+      } else {
+        print('Login failed!');
+      }
+    } catch (e) {
+      print('Exception: $e');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   void _loginWithGoogle() async {
@@ -39,10 +52,15 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final user = await authService.signInWithGoogle();
       if (user != null) {
-        // Handle successful login
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => PredictionScreen()),
+        );
+      } else {
+        print('Login with Google failed!');
       }
     } catch (e) {
-      // Handle error
+      print('Exception: $e');
     } finally {
       setState(() {
         isLoading = false;
@@ -76,7 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               SizedBox(height: 50),
               Text(
-                'Log in to Scale',
+                'Log in to SaySpeak',
                 style: GoogleFonts.roboto(
                   color: Colors.white,
                   fontSize: 24,

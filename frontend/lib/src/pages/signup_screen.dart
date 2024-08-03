@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../components/auth_button.dart';
 import '../services/auth_service.dart';
+import 'login_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
   @override
@@ -12,7 +13,7 @@ class SignUpScreen extends StatefulWidget {
 class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController = TextEditingController();
+  final TextEditingController usernameController = TextEditingController();
   final AuthService authService = AuthService();
   bool isLoading = false;
 
@@ -21,28 +22,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
       isLoading = true;
     });
 
-    // Simulate a sign-up process
-    await Future.delayed(Duration(seconds: 2));
-
-    setState(() {
-      isLoading = false;
-    });
-
-    // Implement your sign-up logic here
-  }
-
-  void _signUpWithGoogle() async {
-    setState(() {
-      isLoading = true;
-    });
-
     try {
-      final user = await authService.signInWithGoogle();
+      final user = await authService.registerWithEmailAndPassword(
+        emailController.text,
+        passwordController.text,
+      );
       if (user != null) {
-        // Handle successful sign up
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => LoginScreen()),
+        );
+        print('All signed up!');
+      } else {
+        print('Registration failed!');
       }
     } catch (e) {
-      // Handle error
+      print('Exception: $e');
     } finally {
       setState(() {
         isLoading = false;
@@ -76,7 +71,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               ),
               SizedBox(height: 50),
               Text(
-                'Sign up for an account',
+                'Get your free account',
                 style: GoogleFonts.roboto(
                   color: Colors.white,
                   fontSize: 24,
@@ -84,6 +79,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
               ),
               SizedBox(height: 24),
+              TextField(
+                controller: usernameController,
+                decoration: InputDecoration(
+                  labelText: 'Username',
+                  labelStyle: TextStyle(color: Colors.white),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white),
+                  ),
+                ),
+                style: TextStyle(color: Colors.white),
+              ),
+              SizedBox(height: 16),
               TextField(
                 controller: emailController,
                 decoration: InputDecoration(
@@ -115,24 +125,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 style: TextStyle(color: Colors.white),
               ),
               SizedBox(height: 16),
-              TextField(
-                controller: confirmPasswordController,
-                decoration: InputDecoration(
-                  labelText: 'Confirm Password',
-                  labelStyle: TextStyle(color: Colors.white),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
-                  ),
-                ),
-                obscureText: true,
-                style: TextStyle(color: Colors.white),
-              ),
-              SizedBox(height: 16),
               AuthButton(
-                text: 'Continue with Email',
+                text: 'Sign Up',
                 onPressed: _signUp,
                 isLoading: isLoading,
                 color: Colors.white,
@@ -144,7 +138,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               SizedBox(height: 16),
               AuthButton(
                 text: 'Continue with Google',
-                onPressed: _signUpWithGoogle,
+                onPressed: () {},  // Google sign-up is not implemented in this example
                 isLoading: isLoading,
                 color: Colors.white,
                 textColor: Colors.black,

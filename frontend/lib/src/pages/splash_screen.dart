@@ -26,7 +26,7 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset('images/sayspeak_circular_logo.png', height: 100), // Your logo here
+            Image.asset('images/sayspeak_circular_logo.png', height: 100),
             SizedBox(height: 20),
             CircularProgressIndicator(),
           ],

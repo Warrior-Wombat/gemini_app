@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from typing import List, Tuple
 from app.services.user_session import User
-from app.config import db
+from app.services.config import db
 
 router = APIRouter()
 
