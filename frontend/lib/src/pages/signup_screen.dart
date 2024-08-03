@@ -13,14 +13,46 @@ class SignUpScreen extends StatefulWidget {
 class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController usernameController = TextEditingController();
+  final TextEditingController confirmPasswordController = TextEditingController();
   final AuthService authService = AuthService();
   bool isLoading = false;
+  String errorMessage = '';
+  bool emailError = false;
+  bool passwordError = false;
+  bool confirmPasswordError = false;
+  bool showError = false;
+  String activeButton = '';
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    confirmPasswordController.dispose();
+    super.dispose();
+  }
 
   void _signUp() async {
     setState(() {
       isLoading = true;
+      activeButton = 'signup';
+      errorMessage = '';
+      showError = false;
+      emailError = false;
+      passwordError = false;
+      confirmPasswordError = false;
     });
+
+    if (passwordController.text != confirmPasswordController.text) {
+      setState(() {
+        isLoading = false;
+        activeButton = '';
+        errorMessage = 'Passwords do not match!';
+        showError = true;
+        passwordError = true;
+        confirmPasswordError = true;
+      });
+      return;
+    }
 
     try {
       final user = await authService.registerWithEmailAndPassword(
@@ -32,17 +64,27 @@ class _SignUpScreenState extends State<SignUpScreen> {
           context,
           MaterialPageRoute(builder: (context) => LoginScreen()),
         );
-        print('All signed up!');
-      } else {
-        print('Registration failed!');
       }
     } catch (e) {
-      print('Exception: $e');
+      setState(() {
+        errorMessage = _parseFirebaseAuthErrorMessage(e.toString());
+        showError = true;
+        emailError = true;
+        passwordError = true;
+        confirmPasswordError = true;
+      });
     } finally {
       setState(() {
         isLoading = false;
+        activeButton = '';
       });
     }
+  }
+
+  String _parseFirebaseAuthErrorMessage(String error) {
+    final regex = RegExp(r'\[.*?\]\s(.*)');
+    final match = regex.firstMatch(error);
+    return match != null ? match.group(1)! : 'An unknown error occurred.';
   }
 
   @override
@@ -66,6 +108,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   icon: Icon(Icons.arrow_back, color: Colors.white),
                   onPressed: () {
                     Navigator.pop(context);
+                    setState(() {
+                      errorMessage = '';
+                      showError = false;
+                    });
                   },
                 ),
               ),
@@ -80,21 +126,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
               ),
               SizedBox(height: 24),
               TextField(
-                controller: usernameController,
-                decoration: InputDecoration(
-                  labelText: 'Username',
-                  labelStyle: TextStyle(color: Colors.white),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
-                  ),
-                ),
-                style: TextStyle(color: Colors.white),
-              ),
-              SizedBox(height: 16),
-              TextField(
                 controller: emailController,
                 decoration: InputDecoration(
                   labelText: 'Email',
@@ -103,6 +134,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     borderSide: BorderSide(color: Colors.white),
                   ),
                   focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white),
+                  ),
+                  errorBorder: emailError ? OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.red),
+                  ) : OutlineInputBorder(
                     borderSide: BorderSide(color: Colors.white),
                   ),
                 ),
@@ -120,15 +156,52 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   focusedBorder: OutlineInputBorder(
                     borderSide: BorderSide(color: Colors.white),
                   ),
+                  errorBorder: passwordError ? OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.red),
+                  ) : OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white),
+                  ),
                 ),
                 obscureText: true,
                 style: TextStyle(color: Colors.white),
               ),
               SizedBox(height: 16),
+              TextField(
+                controller: confirmPasswordController,
+                decoration: InputDecoration(
+                  labelText: 'Confirm Password',
+                  labelStyle: TextStyle(color: Colors.white),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white),
+                  ),
+                  errorBorder: confirmPasswordError ? OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.red),
+                  ) : OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white),
+                  ),
+                ),
+                obscureText: true,
+                style: TextStyle(color: Colors.white),
+              ),
+              AnimatedOpacity(
+                opacity: showError ? 1.0 : 0.0,
+                duration: Duration(milliseconds: 500),
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Text(
+                    errorMessage,
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ),
+              ),
+              SizedBox(height: 16),
               AuthButton(
                 text: 'Sign Up',
                 onPressed: _signUp,
-                isLoading: isLoading,
+                isLoading: isLoading && activeButton == 'signup',
                 color: Colors.white,
                 textColor: Colors.black,
                 width: double.infinity,
@@ -138,13 +211,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
               SizedBox(height: 16),
               AuthButton(
                 text: 'Continue with Google',
-                onPressed: () {},  // Google sign-up is not implemented in this example
-                isLoading: isLoading,
+                onPressed: () {},
+                isLoading: isLoading && activeButton == 'google',
                 color: Colors.white,
                 textColor: Colors.black,
                 width: double.infinity,
                 icon: Image.asset('images/google_logo.png', height: 24, width: 24),
-                borderColor: Colors.grey.shade600, // Light gray border color
+                borderColor: Colors.grey.shade600,
               ),
               SizedBox(height: 16),
               Align(

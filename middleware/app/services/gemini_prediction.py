@@ -3,7 +3,6 @@ import logging
 from typing import List, Tuple, Dict
 from google.api_core import exceptions as google_exceptions
 from google.generativeai import GenerativeModel
-from google.generativeai.types import HarmCategory, HarmBlockThreshold
 from io import BytesIO
 import subprocess
 import io

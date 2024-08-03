@@ -16,10 +16,27 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController passwordController = TextEditingController();
   final AuthService authService = AuthService();
   bool isLoading = false;
+  String errorMessage = '';
+  bool emailError = false;
+  bool passwordError = false;
+  bool showError = false;
+  String activeButton = '';
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
 
   void _login() async {
     setState(() {
       isLoading = true;
+      activeButton = 'login';
+      errorMessage = '';
+      showError = false;
+      emailError = false;
+      passwordError = false;
     });
 
     try {
@@ -32,14 +49,18 @@ class _LoginScreenState extends State<LoginScreen> {
           context,
           MaterialPageRoute(builder: (context) => PredictionScreen()),
         );
-      } else {
-        print('Login failed!');
       }
     } catch (e) {
-      print('Exception: $e');
+      setState(() {
+        errorMessage = _parseFirebaseAuthErrorMessage(e.toString());
+        showError = true;
+        emailError = true;
+        passwordError = true;
+      });
     } finally {
       setState(() {
         isLoading = false;
+        activeButton = '';
       });
     }
   }
@@ -47,6 +68,11 @@ class _LoginScreenState extends State<LoginScreen> {
   void _loginWithGoogle() async {
     setState(() {
       isLoading = true;
+      activeButton = 'google';
+      errorMessage = '';
+      showError = false;
+      emailError = false;
+      passwordError = false;
     });
 
     try {
@@ -56,16 +82,24 @@ class _LoginScreenState extends State<LoginScreen> {
           context,
           MaterialPageRoute(builder: (context) => PredictionScreen()),
         );
-      } else {
-        print('Login with Google failed!');
       }
     } catch (e) {
-      print('Exception: $e');
+      setState(() {
+        errorMessage = _parseFirebaseAuthErrorMessage(e.toString());
+        showError = true;
+      });
     } finally {
       setState(() {
         isLoading = false;
+        activeButton = '';
       });
     }
+  }
+
+  String _parseFirebaseAuthErrorMessage(String error) {
+    final regex = RegExp(r'\[.*?\]\s(.*)');
+    final match = regex.firstMatch(error);
+    return match != null ? match.group(1)! : 'An unknown error occurred.';
   }
 
   @override
@@ -89,6 +123,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   icon: Icon(Icons.arrow_back, color: Colors.white),
                   onPressed: () {
                     Navigator.pop(context);
+                    setState(() {
+                      errorMessage = '';
+                      showError = false;
+                    });
                   },
                 ),
               ),
@@ -113,6 +151,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   focusedBorder: OutlineInputBorder(
                     borderSide: BorderSide(color: Colors.white),
                   ),
+                  errorBorder: emailError ? OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.red),
+                  ) : OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white),
+                  ),
                 ),
                 style: TextStyle(color: Colors.white),
               ),
@@ -128,9 +171,25 @@ class _LoginScreenState extends State<LoginScreen> {
                   focusedBorder: OutlineInputBorder(
                     borderSide: BorderSide(color: Colors.white),
                   ),
+                  errorBorder: passwordError ? OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.red),
+                  ) : OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white),
+                  ),
                 ),
                 obscureText: true,
                 style: TextStyle(color: Colors.white),
+              ),
+              AnimatedOpacity(
+                opacity: showError ? 1.0 : 0.0,
+                duration: Duration(milliseconds: 500),
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Text(
+                    errorMessage,
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ),
               ),
               SizedBox(height: 16),
               Align(
@@ -149,7 +208,7 @@ class _LoginScreenState extends State<LoginScreen> {
               AuthButton(
                 text: 'Login',
                 onPressed: _login,
-                isLoading: isLoading,
+                isLoading: isLoading && activeButton == 'login',
                 color: Colors.white,
                 textColor: Colors.black,
                 width: double.infinity,
@@ -160,12 +219,12 @@ class _LoginScreenState extends State<LoginScreen> {
               AuthButton(
                 text: 'Continue with Google',
                 onPressed: _loginWithGoogle,
-                isLoading: isLoading,
+                isLoading: isLoading && activeButton == 'google',
                 color: Colors.white,
                 textColor: Colors.black,
                 width: double.infinity,
                 icon: Image.asset('images/google_logo.png', height: 24, width: 24),
-                borderColor: Colors.grey.shade600, // Light gray border color
+                borderColor: Colors.grey.shade600,
               ),
               SizedBox(height: 16),
               Align(
@@ -175,7 +234,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => SignUpScreen()),
-                    );
+                    ).then((_) {
+                      setState(() {
+                        errorMessage = '';
+                        showError = false;
+                      });
+                    });
                   },
                   child: Text(
                     'Don\'t have an account? Sign Up',

@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart'; // Assuming you're using Firebase Auth
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -13,12 +14,13 @@ class _PredictionScreenState extends State<PredictionScreen> {
   final List<String> collectedWords = [];
   List<String> defaultWords = ["Hello", "Hi", "Hey", "Good", "How", "What", "When", "Where", "Why"];
   late Future<List<Prediction>> predictions;
-  String userId = 'test_user'; // Replace with actual user ID
+  String userId = '';
   String lastWord = '';
 
   @override
   void initState() {
     super.initState();
+    userId = FirebaseAuth.instance.currentUser?.uid ?? 'test_user'; // Replace with actual user ID from Firebase Auth
     predictions = Provider.of<PredictionService>(context, listen: false).getPredictions(userId, lastWord);
   }
 
