@@ -1,13 +1,12 @@
-import os
+import google.generativeai as genai
 import logging
 from typing import List, Tuple, Dict
 from google.api_core import exceptions as google_exceptions
-from google.generativeai import GenerativeModel
 from io import BytesIO
-import subprocess
 import io
+import subprocess
+from ..services.config import model, SAFETY_SETTINGS, openai_client
 
-from app.services.config import openai_client, SAFETY_SETTINGS
 
 class GeminiPredictor:
     def __init__(self):
@@ -16,33 +15,35 @@ class GeminiPredictor:
         self.cache_size = 1000
         self.initial_prompt_sent = False
         self.word_frequency: Dict[str, Dict[str, int]] = {}
-        self.chat_model = GenerativeModel('gemini-1.5-flash')
+        # Initialize chat session
+        self.chat_model = genai.GenerativeModel('gemini-1.5-flash')
         self.chat = self.chat_model.start_chat(history=[])
 
     def get_predictions(self, context: List[str], user_id: str, is_new_sentence: bool, k: int = 9) -> Tuple[List[str], List[str]]:
         if not self.initial_prompt_sent:
             full_context = ' '.join(self.conversation_history + context)
-            user_prompt = f"""You are an advanced AI model designed to predict the user's next word with high accuracy. Your task is to predict the user's next word, listing 9 possible choices they might choose given the conversation at hand. The user (User) is the one you are predicting the next word for. The other participant (Taker) responds to the user's words. It is important to predict the user's next word based on their intent and in response to what the Taker might say.
-
+            user_prompt = f"""You are an advanced AI model designed to predict the user's next word with high accuracy. Your task is to predict the user's next word, listing 9 possible choices they might choose given the conversation at hand. NEVER SUGGEST OR LIST ANY PUNCTUATION MARKS WHATSOEVER. The user (User) is the one you are predicting the next word for. The other participant (Taker) responds to the user's words. It is important to predict the user's next word based on their intent and in response to what the Taker might say.
+            
             This is the user's first word. Please give 9 more words that, individually, they can add after their first word. Note that for every single 9-word batch prediction you make, the 9 words are intended to be separate predictions for the conversation at hand, and each prediction is meant to serve as the next word in the User's sentence.
 
             {full_context}
 
             Suggest 9 words that would be most relevant and helpful for the user (User) to communicate next. Note that these are all supposed to be sentence starter, capital words. Consider the conversation flow, topic, and user's communication style. Respond with only the suggestions, separated by commas, without any additional text."""
-
+            
             self.initial_prompt_sent = True
         else:
             current_context = ' '.join(context[-10:])
             user_prompt = f"""The user (User) and the receiver (Taker) are having a conversation. The user starts speaking first. You can safely assume that any lines that are not labeled with (Taker) are what the user has said. If the line ends on a Taker line, please recommend 9 predictions as per usual for the first word the user could say in response to what the Taker has said, taking into account the entire conversation as a whole.
-
+            
             Given the current context:
 
             {current_context}
 
-            Suggest 9 words that would be most relevant and helpful for the user (User) to communicate next. Please note that these words are not all meant to piece together a sentence - each of these 9 words are contesting to fill up the same word slot, sort of like a phone's ngram autocomplete.
+            Suggest 9 words that would be most relevant and helpful for the user (User) to communicate next. Please note that these words are not all meant to piece together a sentence - each of these 9 words are contesting to fill up the same word slot, sort of like a phone's ngram autocomplete. NEVER SUGGEST OR LIST ANY PUNCTUATION MARKS WHATSOEVER.
             Consider the conversation flow, topic, and user's communication style.
             Respond with only the suggestions, separated by commas, without any additional text."""
 
+        # Log the prompt being passed to the Gemini API
         logging.info(f"Prompt being passed to Gemini API:\nUser Prompt: {user_prompt}")
 
         try:
@@ -137,7 +138,7 @@ class GeminiPredictor:
     def get_taker_response(self, transcription: str) -> List[str]:
         context = self.conversation_history + [f"(Taker): {transcription}"]
         user_prompt = f"""The user (User) and the receiver (Taker) are having a conversation. The user starts speaking first. You can safely assume that any lines that are not labeled with (Taker) are what the user has said. If the line ends on a Taker line, please recommend 9 predictions as per usual for the first word the user could say in response to what the Taker has said, taking into account the entire conversation as a whole.
-
+        
         Given the current context:
 
         {' '.join(context)}
@@ -146,6 +147,7 @@ class GeminiPredictor:
         Consider the conversation flow, topic, and user's communication style.
         Respond with only the suggestions, separated by commas, without any additional text."""
 
+        # Log the prompt being passed to the Gemini API for the taker response
         logging.info(f"Prompt being passed to Gemini API for taker response:\nUser Prompt: {user_prompt}")
 
         try:
@@ -164,15 +166,17 @@ class GeminiPredictor:
             with open(image_path, 'rb') as image_file:
                 image_data = image_file.read()
 
+            # Prepare the image data in the correct format
             image_part = {"mime_type": "image/jpeg", "data": image_data}
             prompt_parts = [
                 {"mime_type": "text/plain", "data": "Provide a one-word summary for the object in the following image:"},
                 image_part
             ]
 
+            # Log the prompt being passed to the Gemini API for image summary
             logging.info("Image summary prompt being passed to Gemini API.")
 
-            response = self.chat_model.generate_content(prompt_parts, safety_settings=SAFETY_SETTINGS)
+            response = model.generate_content(prompt_parts, safety_settings=SAFETY_SETTINGS)
             if response.candidates and response.candidates[0].content:
                 summary = response.candidates[0].content.strip()
                 logging.info(f"Image summary: {summary}")

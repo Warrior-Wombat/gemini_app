@@ -47,6 +47,7 @@ dependencies:
   http: ^1.2.2
   provider: ^6.1.2
   cloud_firestore: ^4.14.0
+  logger: ^2.4.0
 
 dev_dependencies:
   flutter_test:

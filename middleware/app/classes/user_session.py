@@ -1,58 +1,129 @@
-from typing import List
-from app import db
-from ..classes.weighted_ngram import WeightedNGramModel
-from ..classes.hybrid_predictor import HybridPredictor
+import logging
+from typing import List, Tuple, Dict
+import pyaudio
+import wave
+from io import BytesIO
+from ..services.config import db
+from ..classes.gemini_predictor import GeminiPredictor
 
 class UserSession:
+    sessions: Dict[str, 'UserSession'] = {}
+
     def __init__(self, user_id: str):
         self.user_id = user_id
-        self.ngram_model = WeightedNGramModel()
-        self.predictor = HybridPredictor(self.ngram_model)
-        self.conversation_history = []
+        self.predictor = GeminiPredictor()
+        self.current_sentence = []
+        self.is_new_sentence = True
         self.load_user_data()
 
     def load_user_data(self):
-        # Load user data from Firebase
-        user_doc = db.collection('users').document(self.user_id).get()
+        user_doc = db.collection('users').document(self.user_id).collection('embeddings').document('data').get()
         if user_doc.exists:
             data = user_doc.to_dict()
-            # Reconstruct n-gram model and predictor state
-            # This is a simplified version and would need to be expanded
-            self.ngram_model.ngrams = data.get('ngrams', {})
-            self.ngram_model.total_counts = data.get('total_counts', {})
-            self.predictor.ngram_weight = data.get('ngram_weight', 0.3)
-            self.predictor.gemini_weight = 1 - self.predictor.ngram_weight
+            self.predictor.word_frequency = data.get('word_frequency', {})
 
     def save_user_data(self):
-        # Save user data to Firebase
-        db.collection('users').document(self.user_id).set({
-            'ngrams': self.ngram_model.ngrams,
-            'total_counts': self.ngram_model.total_counts,
-            'ngram_weight': self.predictor.ngram_weight,
-            # Add other relevant data
+        db.collection('users').document(self.user_id).collection('embeddings').document('data').set({
+            'word_frequency': self.predictor.word_frequency,
         }, merge=True)
 
-    def get_predictions(self, current_input: str) -> List[str]:
-        context = ' '.join(self.conversation_history + [current_input])
-        return self.predictor.get_predictions(context)
+    def get_predictions(self, current_input: str) -> Tuple[List[str], List[str]]:
+        context = self.current_sentence + [current_input]
+        gemini_predictions, _ = self.predictor.get_predictions(context, self.user_id, self.is_new_sentence)
+        usage_based_predictions = self.predictor.get_usage_based_predictions(context[-1] if context else '', k=6)
+        logging.info(f"Usage-based predictions: {usage_based_predictions}")
+        return gemini_predictions, usage_based_predictions
 
     def update_model(self, selected_word: str):
-        self.conversation_history.append(selected_word)
-        context = ' '.join(self.conversation_history)
+        self.predictor.update_history(selected_word)
+        self.current_sentence.append(selected_word)
+
+        if len(self.current_sentence) > 1:
+            last_word = self.current_sentence[-2]
+            self.update_word_frequency(last_word, selected_word)
         
-        # Update n-gram model
-        self.ngram_model.update(context)
+        if selected_word.endswith('.'):
+            self.end_sentence()
+        else:
+            self.is_new_sentence = False
+
+    def end_sentence(self):
+        self.current_sentence = []
+        self.is_new_sentence = True
+        self.save_user_data()
+
+    def listen_for_context(self):
+        print("\nListening for conversation context. Speak now...")
+        audio_data = self.record_audio()
+        if audio_data:
+            transcription = self.predictor.transcribe_audio(audio_data)
+            if transcription:
+                print(f"Transcribed: {transcription}")
+                # need taker prefix for gemini labeling (clarity)
+                taker_response = f"(Taker): {transcription}"
+                self.predictor.conversation_history.append(taker_response)
+                logging.debug(f"Updated conversation history with Taker response: {self.predictor.conversation_history}")
+                predictions = self.predictor.get_taker_response(transcription)
+                print("Suggested words/phrases for user response:", ', '.join(predictions))
+
+    def record_audio(self, duration=5, sample_rate=16000, channels=1, chunk=1024):
+        p = pyaudio.PyAudio()
+        stream = p.open(format=pyaudio.paInt16,
+                        channels=channels,
+                        rate=sample_rate,
+                        input=True,
+                        frames_per_buffer=chunk)
+
+        print("Recording...")
+        frames = []
+        for _ in range(0, int(sample_rate / chunk * duration)):
+            data = stream.read(chunk)
+            frames.append(data)
+        print("Recording finished.")
+
+        stream.stop_stream()
+        stream.close()
+        p.terminate()
+
+        audio_data = BytesIO()
+        wf = wave.open(audio_data, 'wb')
+        wf.setnchannels(channels)
+        wf.setsampwidth(p.get_sample_size(pyaudio.paInt16))
+        wf.setframerate(sample_rate)
+        wf.writeframes(b''.join(frames))
+        wf.close()
+
+        audio_data.seek(0)
+        return audio_data
+
+    def handle_image_input(self):
+        image_path = input("Enter the path to the image: ").strip()
+        summary = self.predictor.generate_image_summary(image_path)
+        print(f"Image summary: {summary}")
         
-        # Update predictor weights
-        ngram_preds = self.ngram_model.predict(tuple(context.split()[-self.ngram_model.n+1:]))
-        gemini_preds = self.predictor.get_gemini_predictions(context, 9)
-        self.predictor.update_weights(selected_word, ngram_preds, gemini_preds)
+        self.update_model(summary)
         
-        # Check if accuracy threshold is met
-        if self.predictor.check_accuracy() >= 0.98:
-            print("Model has reached 98% accuracy!")
+        predictions, _ = self.get_predictions("")
+        print("Suggested words/phrases:", ', '.join(predictions))
+
+    def update_word_frequency(self, last_word: str, selected_word: str):
+        # Fail-safe mechanism to replace empty components with default values
+        if not last_word:
+            last_word = '<START>'
+        if not selected_word:
+            selected_word = '<END>'
         
-        # Periodically decay n-gram counts and save user data
-        if len(self.conversation_history) % 100 == 0:
-            self.ngram_model.decay_counts()
-            self.save_user_data()
+        if last_word not in self.predictor.word_frequency:
+            self.predictor.word_frequency[last_word] = {}
+
+        if selected_word not in self.predictor.word_frequency[last_word]:
+            self.predictor.word_frequency[last_word][selected_word] = 0
+
+        self.predictor.word_frequency[last_word][selected_word] += 1
+        logging.debug(f"Updated word frequency: {self.predictor.word_frequency}")
+    
+    @classmethod
+    def get_user_session(cls, user_id: str) -> 'UserSession':
+        if user_id not in cls.sessions:
+            cls.sessions[user_id] = cls(user_id)
+        return cls.sessions[user_id]

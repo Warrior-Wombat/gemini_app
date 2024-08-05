@@ -24,15 +24,3 @@ def create_app() -> FastAPI:
     return app
 
 app = create_app()
-
-logger = logging.getLogger(__name__)
-@app.get("/")
-async def read_root():
-    logger.info("Root endpoint called")
-    return {"message": "Hello, World!"}
-
-@app.post("/auth/register")
-async def register(user_data: dict):
-    logger.info(f"Register endpoint called with data: {user_data}")
-    # Your existing code for registration
-    return {"message": "User registered"}

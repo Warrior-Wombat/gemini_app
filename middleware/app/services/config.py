@@ -15,6 +15,7 @@ db = firestore.client()
 
 # Configure generative AI
 genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
+model = genai.GenerativeModel(model_name='gemini-1.5-flash')
 
 # Initialize OpenAI client
 openai_client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
