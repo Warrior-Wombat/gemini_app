@@ -3,6 +3,7 @@ from typing import List, Tuple, Dict
 import pyaudio
 import wave
 from io import BytesIO
+from threading import Thread, Event
 from ..services.config import db
 from ..classes.gemini_predictor import GeminiPredictor
 
@@ -14,6 +15,9 @@ class UserSession:
         self.predictor = GeminiPredictor()
         self.current_sentence = []
         self.is_new_sentence = True
+        self.recording_thread = None
+        self.stop_recording_event = Event()
+        self.audio_buffer = BytesIO()
         self.load_user_data()
 
     def load_user_data(self):
@@ -52,62 +56,20 @@ class UserSession:
         self.is_new_sentence = True
         self.save_user_data()
 
-    def listen_for_context(self):
-        print("\nListening for conversation context. Speak now...")
-        audio_data = self.record_audio()
-        if audio_data:
-            transcription = self.predictor.transcribe_audio(audio_data)
-            if transcription:
-                print(f"Transcribed: {transcription}")
-                # need taker prefix for gemini labeling (clarity)
-                taker_response = f"(Taker): {transcription}"
-                self.predictor.conversation_history.append(taker_response)
-                logging.debug(f"Updated conversation history with Taker response: {self.predictor.conversation_history}")
-                predictions = self.predictor.get_taker_response(transcription)
-                print("Suggested words/phrases for user response:", ', '.join(predictions))
-
-    def record_audio(self, duration=5, sample_rate=16000, channels=1, chunk=1024):
-        p = pyaudio.PyAudio()
-        stream = p.open(format=pyaudio.paInt16,
-                        channels=channels,
-                        rate=sample_rate,
-                        input=True,
-                        frames_per_buffer=chunk)
-
-        print("Recording...")
-        frames = []
-        for _ in range(0, int(sample_rate / chunk * duration)):
-            data = stream.read(chunk)
-            frames.append(data)
-        print("Recording finished.")
-
-        stream.stop_stream()
-        stream.close()
-        p.terminate()
-
-        audio_data = BytesIO()
-        wf = wave.open(audio_data, 'wb')
-        wf.setnchannels(channels)
-        wf.setsampwidth(p.get_sample_size(pyaudio.paInt16))
-        wf.setframerate(sample_rate)
-        wf.writeframes(b''.join(frames))
-        wf.close()
-
-        audio_data.seek(0)
-        return audio_data
-
-    def handle_image_input(self):
-        image_path = input("Enter the path to the image: ").strip()
-        summary = self.predictor.generate_image_summary(image_path)
-        print(f"Image summary: {summary}")
-        
-        self.update_model(summary)
-        
-        predictions, _ = self.get_predictions("")
-        print("Suggested words/phrases:", ', '.join(predictions))
+    def label_response(self, transcription: str):
+        if transcription:
+            logging.debug(f"Transcribed: {transcription}")
+            taker_response = f"(Taker): {transcription}"
+            self.predictor.conversation_history.append(taker_response)
+            logging.debug(f"Updated conversation history with Taker response: {self.predictor.conversation_history}")
+            predictions = self.predictor.get_taker_response(transcription)
+            logging.debug(f"Suggested words/phrases for user response: {', '.join(predictions)}")
+            return {
+                "taker_response": taker_response,
+                "predictions": predictions
+            }
 
     def update_word_frequency(self, last_word: str, selected_word: str):
-        # Fail-safe mechanism to replace empty components with default values
         if not last_word:
             last_word = '<START>'
         if not selected_word:

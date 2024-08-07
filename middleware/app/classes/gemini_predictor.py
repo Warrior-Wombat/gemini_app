@@ -5,7 +5,7 @@ from google.api_core import exceptions as google_exceptions
 from io import BytesIO
 import io
 import subprocess
-from ..services.config import model, SAFETY_SETTINGS, openai_client
+from ..services.config import model, SAFETY_SETTINGS
 
 
 class GeminiPredictor:
@@ -117,23 +117,6 @@ class GeminiPredictor:
             raise ValueError(f"FFmpeg error: {error.decode()}")
 
         return io.BytesIO(wav_data)
-
-    def transcribe_audio(self, audio_data: BytesIO) -> str:
-        try:
-            wav_buffer = self.convert_to_wav(audio_data)
-            wav_buffer.name = 'audio.wav'
-
-            logging.info("Transcription request being sent to OpenAI API")
-            response = openai_client.audio.transcriptions.create(
-                model="whisper-1",
-                file=wav_buffer
-            )
-            transcription = response.text
-            logging.info(f"Transcribed audio: {transcription}")
-            return transcription
-        except Exception as e:
-            logging.error(f"Error transcribing audio: {str(e)}")
-            return ""
 
     def get_taker_response(self, transcription: str) -> List[str]:
         context = self.conversation_history + [f"(Taker): {transcription}"]

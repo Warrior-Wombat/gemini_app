@@ -31,7 +31,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        Provider<PredictionService>(create: (_) => PredictionService()),
+        ChangeNotifierProvider<PredictionService>(create: (_) => PredictionService()),
       ],
       child: MaterialApp(
         title: 'Auth App',
