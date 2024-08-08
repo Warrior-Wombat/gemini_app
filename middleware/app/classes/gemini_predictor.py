@@ -7,7 +7,6 @@ import io
 import subprocess
 from ..services.config import model, SAFETY_SETTINGS
 
-
 class GeminiPredictor:
     def __init__(self):
         self.conversation_history = []
@@ -144,29 +143,37 @@ class GeminiPredictor:
             logging.error(f"Unexpected error in get_taker_response: {str(e)}")
             return self.get_default_predictions(k=9, is_new_sentence=True)
 
-    def generate_image_summary(self, image_path: str) -> str:
-        try:
-            with open(image_path, 'rb') as image_file:
-                image_data = image_file.read()
+    def get_image_predictions(self, image_data: BytesIO, k: int = 9) -> List[str]:
+        image_data.seek(0)
+        image_bytes = image_data.read()
 
-            # Prepare the image data in the correct format
-            image_part = {"mime_type": "image/jpeg", "data": image_data}
-            prompt_parts = [
-                {"mime_type": "text/plain", "data": "Provide a one-word summary for the object in the following image:"},
-                image_part
+        user_prompt = f"""You are an advanced AI model designed to provide descriptive words for images with high accuracy. Your task is to describe the contents of the image by listing {k} words that best represent the objects, scenes, or concepts depicted in the image. Ensure that the words are relevant, concise, and varied.
+
+        Provide {k} descriptive words for the given image. Respond with only the words, separated by commas, without any additional text."""
+
+        logging.info(f"Prompt being passed to Gemini API for image prediction:\nUser Prompt: {user_prompt}")
+
+        try:
+
+            content = [
+                user_prompt,
+                {"mime_type": "image/jpeg", "data": image_bytes}
             ]
 
-            # Log the prompt being passed to the Gemini API for image summary
-            logging.info("Image summary prompt being passed to Gemini API.")
+            response = self.chat_model.generate_content(content, safety_settings=SAFETY_SETTINGS)
 
-            response = model.generate_content(prompt_parts, safety_settings=SAFETY_SETTINGS)
-            if response.candidates and response.candidates[0].content:
-                summary = response.candidates[0].content.strip()
-                logging.info(f"Image summary: {summary}")
-                return summary
+            # Extract and process the text from the response
+            if response.candidates and response.candidates[0].content.parts:
+                text = response.candidates[0].content.parts[0].text
+                predictions = [word.strip() for word in text.split(',') if word.strip()]
+                logging.info(f"Predictions received: {predictions}")
+                return predictions[:k]
             else:
-                logging.error(f"Image summary failed: {response}")
-                return "unknown"
+                logging.error("Gemini API returned no content for image prediction.")
+                return self.get_default_predictions(k, is_new_sentence=False)
+        except google_exceptions.GoogleAPIError as e:
+            logging.error(f"Error calling Gemini API for image prediction: {str(e)}")
+            return self.get_default_predictions(k, is_new_sentence=False)
         except Exception as e:
-            logging.error(f"Error generating image summary: {str(e)}")
-            return "unknown"
+            logging.error(f"Unexpected error in get_image_predictions: {str(e)}")
+            return self.get_default_predictions(k, is_new_sentence=False)

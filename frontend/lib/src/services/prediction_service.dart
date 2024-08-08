@@ -204,18 +204,30 @@ class PredictionService extends ChangeNotifier {
     }
   }
 
-  Future<void> handleImageInput(String userId, String imagePath) async {
-    final response = await http.post(
+  Future<List<String>> handleImageInput(String userId, Uint8List imageData) async {
+    final request = http.MultipartRequest(
+      'POST',
       Uri.parse('$baseUrl/image_input'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({'user_id': userId, 'image_path': imagePath}),
     );
 
-    _logger.i('Request to /image_input: $baseUrl/image_input, body: ${json.encode({'user_id': userId, 'image_path': imagePath})}');
+    request.fields['user_id'] = userId;
+    request.files.add(http.MultipartFile.fromBytes(
+      'file',
+      imageData,
+      filename: 'image.jpg',
+      contentType: MediaType('image', 'jpeg'),
+    ));
+
+    final response = await request.send();
+    final responseBody = await response.stream.bytesToString();
 
     if (response.statusCode != 200) {
-      _logger.e('Failed to handle image input: ${response.statusCode}, ${response.body}');
+      _logger.e('Failed to handle image input: ${response.statusCode}, $responseBody');
       throw Exception('Failed to handle image input');
+    } else {
+      _logger.i('Image input handled successfully: $responseBody');
+      final jsonResponse = jsonDecode(responseBody);
+      return List<String>.from(jsonResponse['predictions']);
     }
   }
 

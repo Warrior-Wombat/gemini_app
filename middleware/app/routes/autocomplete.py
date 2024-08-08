@@ -1,7 +1,8 @@
-from fastapi import APIRouter, HTTPException, Depends, File, UploadFile
+from fastapi import APIRouter, HTTPException, Depends, File, UploadFile, Form
 from pydantic import BaseModel
 from io import BytesIO
 from ..classes.user_session import UserSession
+import logging
 
 router = APIRouter()
 
@@ -9,14 +10,12 @@ class UserRequest(BaseModel):
     user_id: str
     input_text: str
 
-# different classes to differentiate between p1 and p2 of conversation
 class LabelResponseRequest(BaseModel):
     user_id: str
     transcription: str
 
-class ImageRequest(BaseModel):
+class EndRequest(BaseModel):
     user_id: str
-    image_path: str
 
 def get_user_session(user_id: str):
     return UserSession.get_user_session(user_id)
@@ -35,15 +34,21 @@ def user_input(request: UserRequest):
         }
 
 @router.post("/image_input")
-def handle_image_input(request: ImageRequest):
-    session = UserSession.get_user_session(request.user_id)
-    session.handle_image_input(request.image_path)
-    return {"message": "Image handled successfully"}
+def handle_image_input(user_id: str = Form(...), file: UploadFile = File(...)):
+    session = UserSession.get_user_session(user_id)
+    
+    image_data = BytesIO(file.file.read())
+    logging.debug(f"Image data size: {len(image_data.getvalue())} bytes")
+    
+    predictions = session.handle_image_input(image_data)
+    logging.info(f"Predictions from image input: {predictions}")
+    return {"message": "Image handled successfully", "predictions": predictions}
 
 @router.post("/end_session")
-def end_session(request: UserRequest):
+def end_session(request: EndRequest):
     session = UserSession.get_user_session(request.user_id)
     session.save_user_data()
+    session.clear_history()
     return {"message": "User data saved and session ended"}
 
 @router.post("/label_response")

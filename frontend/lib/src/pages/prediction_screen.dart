@@ -1,5 +1,8 @@
+import 'dart:typed_data';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../services/prediction_service.dart';
@@ -9,33 +12,26 @@ class PredictionScreen extends StatefulWidget {
   _PredictionScreenState createState() => _PredictionScreenState();
 }
 
-class _PredictionScreenState extends State<PredictionScreen> with WidgetsBindingObserver {
+class _PredictionScreenState extends State<PredictionScreen> {
   final List<String> collectedWords = [];
   List<String> defaultWords = ["Hello", "Hi", "Hey", "Good", "How", "What", "When", "Where", "Why"];
   String userId = '';
   String lastWord = '';
   bool _isRecording = false;
+  Uint8List? _imageData;
+  List<String> _imagePredictions = [];
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
     userId = FirebaseAuth.instance.currentUser?.uid ?? 'unauthenticated';
     context.read<PredictionService>().getPredictions(userId, lastWord);
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
+    _callEndSession();
     super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused) {
-      _callEndSession();
-    }
-    super.didChangeAppLifecycleState(state);
   }
 
   void _callEndSession() async {
@@ -95,6 +91,63 @@ class _PredictionScreenState extends State<PredictionScreen> with WidgetsBinding
     }
   }
 
+  Future<void> _pickImage() async {
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+      if (pickedFile != null) {
+        final bytes = await pickedFile.readAsBytes();
+        await _processImage(bytes);
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to pick image: $e')),
+      );
+    }
+  }
+
+  Future<void> _captureImage() async {
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: ImageSource.camera);
+
+      if (pickedFile != null) {
+        final bytes = await pickedFile.readAsBytes();
+        await _processImage(bytes);
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to capture image: $e')),
+      );
+    }
+  }
+
+  Future<void> _processImage(Uint8List bytes) async {
+    setState(() {
+      _imageData = bytes;
+    });
+
+    try {
+      final predictions = await context.read<PredictionService>().handleImageInput(userId, bytes);
+      setState(() {
+        _imagePredictions = predictions;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to process image: $e')),
+      );
+    }
+  }
+
+  void _addImagePrediction(String prediction) {
+    setState(() {
+      collectedWords.add(prediction);
+      lastWord = prediction;
+      context.read<PredictionService>().getPredictions(userId, lastWord);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final predictionService = context.watch<PredictionService>();
@@ -104,6 +157,14 @@ class _PredictionScreenState extends State<PredictionScreen> with WidgetsBinding
         title: Text('Predictions'),
         actions: [
           IconButton(
+            icon: Icon(Icons.camera_alt),
+            onPressed: _captureImage,
+          ),
+          IconButton(
+            icon: Icon(Icons.photo),
+            onPressed: _pickImage,
+          ),
+          IconButton(
             icon: Icon(_isRecording ? Icons.stop_circle_outlined : Icons.mic),
             onPressed: _toggleRecording,
           ),
@@ -111,6 +172,41 @@ class _PredictionScreenState extends State<PredictionScreen> with WidgetsBinding
       ),
       body: Column(
         children: [
+          if (_imageData != null) ...[
+            Container(
+              margin: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.white, width: 4),
+              ),
+              child: Image.memory(
+                _imageData!,
+                height: 200,
+                fit: BoxFit.cover,
+              ),
+            ),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: _imagePredictions.map((prediction) {
+                  return GestureDetector(
+                    onTap: () => _addImagePrediction(prediction),
+                    child: Container(
+                      margin: EdgeInsets.symmetric(horizontal: 4),
+                      padding: EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.blueAccent,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        prediction,
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ],
           Container(
             padding: EdgeInsets.all(16.0),
             color: Colors.grey[200],

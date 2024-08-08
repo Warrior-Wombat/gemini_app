@@ -83,6 +83,13 @@ class UserSession:
 
         self.predictor.word_frequency[last_word][selected_word] += 1
         logging.debug(f"Updated word frequency: {self.predictor.word_frequency}")
+
+    def handle_image_input(self, image_data: BytesIO) -> List[str]:
+        return self.predictor.get_image_predictions(image_data)
+
+    def clear_history(self):
+        self.predictor.conversation_history = []
+        logging.info(f"Cleared conversation history for user {self.user_id}")
     
     @classmethod
     def get_user_session(cls, user_id: str) -> 'UserSession':
