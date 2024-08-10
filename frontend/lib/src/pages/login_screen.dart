@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../components/auth_button.dart';
 import '../services/auth_service.dart';
+import 'info_screen.dart'; // Import the InfoScreen
 import 'prediction_screen.dart';
 import 'signup_screen.dart';
 
@@ -45,10 +46,20 @@ class _LoginScreenState extends State<LoginScreen> {
         passwordController.text,
       );
       if (user != null) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => PredictionScreen()),
-        );
+        final isFirstLogin = await authService.checkFirstLogin(user);
+        if (isFirstLogin) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => InfoScreen()),
+          ).then((_) async {
+            await authService.updateFirstLoginStatus(user);
+          });
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => PredictionScreen()),
+          );
+        }
       }
     } catch (e) {
       setState(() {
@@ -78,10 +89,20 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final user = await authService.signInWithGoogle();
       if (user != null) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => PredictionScreen()),
-        );
+        final isFirstLogin = await authService.checkFirstLogin(user);
+        if (isFirstLogin) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => InfoScreen()),
+          ).then((_) async {
+            await authService.updateFirstLoginStatus(user);
+          });
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => PredictionScreen()),
+          );
+        }
       }
     } catch (e) {
       setState(() {

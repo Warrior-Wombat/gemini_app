@@ -3,14 +3,14 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
-class AuthService extends ChangeNotifier{
+class AuthService extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   Future<User?> signInWithGoogle() async {
     try {
-      final GoogleSignIn googleSignIn = GoogleSignIn();
-      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
       if (googleUser != null) {
         final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
@@ -22,7 +22,7 @@ class AuthService extends ChangeNotifier{
         final User? user = userCredential.user;
 
         if (user != null) {
-          await _createUserDocument(user);
+          await _createUserDocumentIfNotExists(user);
           return user;
         }
       }
@@ -38,7 +38,7 @@ class AuthService extends ChangeNotifier{
       final User? user = userCredential.user;
 
       if (user != null) {
-        await _createUserDocument(user);
+        await _createUserDocumentIfNotExists(user);
         return user;
       }
       return null;
@@ -53,7 +53,7 @@ class AuthService extends ChangeNotifier{
       final User? user = userCredential.user;
 
       if (user != null) {
-        await _createUserDocument(user);
+        await _createUserDocumentIfNotExists(user);
         return user;
       }
       return null;
@@ -64,11 +64,9 @@ class AuthService extends ChangeNotifier{
 
   Future<void> logOut() async {
     await _auth.signOut();
-    final GoogleSignIn googleSignIn = GoogleSignIn();
-    await googleSignIn.signOut();
   }
 
-  Future<void> _createUserDocument(User user) async {
+  Future<void> _createUserDocumentIfNotExists(User user) async {
     final userDoc = _firestore.collection('users').doc(user.uid);
     final userSnapshot = await userDoc.get();
 
