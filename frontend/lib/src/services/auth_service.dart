@@ -1,8 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
-class AuthService {
+class AuthService extends ChangeNotifier{
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -61,16 +62,39 @@ class AuthService {
     }
   }
 
-  Future<void> signOut() async {
+  Future<void> logOut() async {
     await _auth.signOut();
+    final GoogleSignIn googleSignIn = GoogleSignIn();
+    await googleSignIn.signOut();
   }
 
   Future<void> _createUserDocument(User user) async {
     final userDoc = _firestore.collection('users').doc(user.uid);
-    final userData = {
-      'email': user.email,
-    };
+    final userSnapshot = await userDoc.get();
 
-    await userDoc.set(userData, SetOptions(merge: true));
+    if (!userSnapshot.exists) {
+      final userData = {
+        'email': user.email,
+        'firstLogin': true,
+      };
+
+      await userDoc.set(userData);
+    }
+  }
+
+  Future<bool> checkFirstLogin(User user) async {
+    final userDoc = _firestore.collection('users').doc(user.uid);
+    final userSnapshot = await userDoc.get();
+
+    if (userSnapshot.exists) {
+      return userSnapshot.data()?['firstLogin'] ?? false;
+    }
+
+    return false;
+  }
+
+  Future<void> updateFirstLoginStatus(User user) async {
+    final userDoc = _firestore.collection('users').doc(user.uid);
+    await userDoc.update({'firstLogin': false});
   }
 }

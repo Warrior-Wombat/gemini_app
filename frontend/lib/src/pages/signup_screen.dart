@@ -67,7 +67,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       }
     } catch (e) {
       setState(() {
-        errorMessage = _parseFirebaseAuthErrorMessage(e.toString());
+        errorMessage = _formatErrorMessage(e.toString());
         showError = true;
         emailError = true;
         passwordError = true;
@@ -81,7 +81,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
   }
 
-  String _parseFirebaseAuthErrorMessage(String error) {
+  String _formatErrorMessage(String error) {
     final regex = RegExp(r'\[.*?\]\s(.*)');
     final match = regex.firstMatch(error);
     return match != null ? match.group(1)! : 'An unknown error occurred.';

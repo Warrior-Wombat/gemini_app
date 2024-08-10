@@ -14,14 +14,13 @@ class GeminiPredictor:
         self.cache_size = 1000
         self.initial_prompt_sent = False
         self.word_frequency: Dict[str, Dict[str, int]] = {}
-        # Initialize chat session
         self.chat_model = genai.GenerativeModel('gemini-1.5-flash')
         self.chat = self.chat_model.start_chat(history=[])
 
     def get_predictions(self, context: List[str], user_id: str, is_new_sentence: bool, k: int = 9) -> Tuple[List[str], List[str]]:
         if not self.initial_prompt_sent:
             full_context = ' '.join(self.conversation_history + context)
-            user_prompt = f"""You are an advanced AI model designed to predict the user's next word with high accuracy. Your task is to predict the user's next word, listing 9 possible choices they might choose given the conversation at hand. NEVER SUGGEST OR LIST ANY PUNCTUATION MARKS WHATSOEVER. The user (User) is the one you are predicting the next word for. The other participant (Taker) responds to the user's words. It is important to predict the user's next word based on their intent and in response to what the Taker might say.
+            user_prompt = f"""You are an advanced AI model designed to predict the user's next word with high accuracy. Your task is to predict the user's next word, listing 9 possible choices they might choose given the conversation at hand. NEVER SUGGEST OR LIST ANY PUNCTUATION MARKS THAT END A SENTENCE WHATSOEVER. Contraction words are fine. The user (User) is the one you are predicting the next word for. The other participant (Taker) responds to the user's words. It is important to predict the user's next word based on their intent and in response to what the Taker might say.
             
             This is the user's first word. Please give 9 more words that, individually, they can add after their first word. Note that for every single 9-word batch prediction you make, the 9 words are intended to be separate predictions for the conversation at hand, and each prediction is meant to serve as the next word in the User's sentence.
 
@@ -38,7 +37,7 @@ class GeminiPredictor:
 
             {current_context}
 
-            Suggest 9 words that would be most relevant and helpful for the user (User) to communicate next. Please note that these words are not all meant to piece together a sentence - each of these 9 words are contesting to fill up the same word slot, sort of like a phone's ngram autocomplete. NEVER SUGGEST OR LIST ANY PUNCTUATION MARKS WHATSOEVER.
+            Suggest 9 words that would be most relevant and helpful for the user (User) to communicate next. Please note that these words are not all meant to piece together a sentence - each of these 9 words are contesting to fill up the same word slot, sort of like a phone's ngram autocomplete. NEVER SUGGEST OR LIST ANY PUNCTUATION MARKS THAT END A SENTENCE WHATSOEVER. Apostrophes/contractions are fine.
             Consider the conversation flow, topic, and user's communication style.
             Respond with only the suggestions, separated by commas, without any additional text."""
 
@@ -176,4 +175,37 @@ class GeminiPredictor:
             return self.get_default_predictions(k, is_new_sentence=False)
         except Exception as e:
             logging.error(f"Unexpected error in get_image_predictions: {str(e)}")
+            return self.get_default_predictions(k, is_new_sentence=False)
+        
+    def get_search_predictions(self, input_string: str, k: int = 20) -> List[str]:
+        user_prompt = f"""You are an advanced AI model designed to complete user input with high accuracy. Given a partial input string, your task is to predict and list {k} possible completions where each completion is a singular word. Your suggestions should be relevant and diverse, considering various possible completions based on the given input string. For example, if the user types 'i', you should list words that start with 'i' ONLY. If the user types 'im', you should reply with words that start with 'im' ONLY. Singular words, not multiple. 
+
+        Here is the input string:
+        "{input_string}"
+
+        Provide {k} completions for the given input string. Respond with only the words, separated by commas, without any additional text."""
+
+        logging.info(f"Prompt being passed to Gemini API for autocomplete predictions:\nUser Prompt: {user_prompt}")
+
+        try:
+            response = self.chat.send_message(user_prompt, safety_settings=SAFETY_SETTINGS)
+            text = response.text
+            
+            if not text:
+                logging.warning("Gemini API returned an empty response for autocomplete predictions")
+                return self.get_default_predictions(k, is_new_sentence=False)
+
+            # Process the response to extract suggestions
+            suggestions = [suggestion.strip() for suggestion in text.split(',') if suggestion.strip() and not any(punct in suggestion for punct in ['.', '!', '?'])]
+            
+            # Ensure the suggestions list does not exceed the soft limit
+            suggestions = suggestions[:k]
+            
+            return suggestions
+
+        except google_exceptions.GoogleAPIError as e:
+            logging.error(f"Error calling Gemini API for autocomplete predictions: {str(e)}")
+            return self.get_default_predictions(k, is_new_sentence=False)
+        except Exception as e:
+            logging.error(f"Unexpected error in get_autocomplete_predictions: {str(e)}")
             return self.get_default_predictions(k, is_new_sentence=False)

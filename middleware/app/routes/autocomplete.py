@@ -17,6 +17,13 @@ class LabelResponseRequest(BaseModel):
 class EndRequest(BaseModel):
     user_id: str
 
+class RemoveWordRequest(BaseModel):
+    user_id: str
+
+class SearchRequest(BaseModel):
+    user_id: str
+    query: str
+
 def get_user_session(user_id: str):
     return UserSession.get_user_session(user_id)
 
@@ -49,6 +56,7 @@ def end_session(request: EndRequest):
     session = UserSession.get_user_session(request.user_id)
     session.save_user_data()
     session.clear_history()
+    UserSession.end_gemini_session(request.user_id)
     return {"message": "User data saved and session ended"}
 
 @router.post("/label_response")
@@ -57,3 +65,28 @@ def label_response(request: LabelResponseRequest):
     response = session.label_response(request.transcription)
     # return predictions from processing
     return {"predictions": response['predictions']}
+
+@router.post("/remove_word")
+def remove_word(request: RemoveWordRequest):
+    logging.debug(f"Received request to remove word for user: {request.user_id}")
+    session = UserSession.get_user_session(request.user_id)
+    removed_word = session.remove_last_word()
+    
+    if removed_word:
+        gemini_predictions, usage_based_predictions = session.get_predictions("")
+        logging.debug(f"Successfully removed word: {removed_word}. New predictions: {gemini_predictions}, {usage_based_predictions}")
+        return {
+            "message": f"Successfully removed word: {removed_word}",
+            "removed_word": removed_word,
+            "gemini_predictions": gemini_predictions,
+            "usage_based_predictions": usage_based_predictions
+        }
+    else:
+        logging.debug("No word to remove")
+        return {"message": "No word to remove", "removed_word": ""}
+
+@router.post("/search")
+def search_predictions(request: SearchRequest):
+    session = UserSession.get_user_session(request.user_id)
+    predictions = session.get_autocomplete_predictions(request.query)
+    return {"predictions": predictions}

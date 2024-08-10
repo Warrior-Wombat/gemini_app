@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:audioplayers/audioplayers.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_sound/flutter_sound.dart';
@@ -245,10 +247,79 @@ class PredictionService extends ChangeNotifier {
       throw Exception('Failed to end session');
     }
   }
+  Future<Uint8List> speakText(String text) async {
+    final apiKey = dotenv.env['ELEVENLABS_API_KEY'];
+    final voiceId = 'EXAVITQu4vr4xnSDxMaL';
+    final url = 'https://api.elevenlabs.io/v1/text-to-speech/$voiceId';
+
+    final headers = {
+      'Accept': 'audio/mpeg',
+      'Content-Type': 'application/json',
+      'xi-api-key': apiKey!,
+    };
+
+    final body = json.encode({
+      'text': text,
+      'model_id': 'eleven_turbo_v2_5',
+      'voice_settings': {
+        'stability': 0.5,
+        'similarity_boost': 0.5
+      }
+    });
+
+    final response = await http.post(Uri.parse(url), headers: headers, body: body);
+
+    if (response.statusCode == 200) {
+      return response.bodyBytes;
+    } else {
+      _logger.e('Failed to synthesize speech: ${response.statusCode}, ${response.body}');
+      throw Exception('Failed to synthesize speech: ${response.statusCode}, ${response.body}');
+    }
+  }
+
+  Future<void> deleteWord(String userId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/remove_word'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'user_id': userId}),
+      );
+
+      if (response.statusCode == 200) {
+        Map<String, dynamic> body = json.decode(response.body);
+        _predictions = [
+          ...(body['gemini_predictions'] as List).map((word) => Prediction(word: word.toString())).toList(),
+          ...(body['usage_based_predictions'] as List).map((word) => Prediction(word: word.toString())).toList(),
+        ];
+        notifyListeners();
+      } else {
+        _logger.e('Failed to delete word: ${response.statusCode}, ${response.body}');
+        throw Exception('Failed to delete word');
+      }
+    } catch (e) {
+      _logger.e('Error deleting word: $e');
+      throw Exception('Error deleting word: $e');
+    }
+  }
+  
+  Future<void> sendContext(String userId, String context) async {
+    try {
+      if (context == '') return; // elevenlabs breathes for some reason when no text is put in
+      await updateModel(userId, context);
+      final audioBytes = await speakText(context);
+      AudioPlayer audioPlayer = AudioPlayer();
+      await audioPlayer.play(BytesSource(audioBytes));
+      await endSession(userId);
+    } catch (e) {
+      _logger.e('Error sending context: $e');
+      throw Exception('Error sending context: $e');
+    }
+  }
 
   @override
   Future<void> dispose() async {
     await _audioRecorder.closeRecorder();
+    await endSession(FirebaseAuth.instance.currentUser?.uid ?? 'unauthenticated');
     super.dispose();
   }
 }

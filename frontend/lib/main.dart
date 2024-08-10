@@ -1,11 +1,13 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:gemini_app/src/services/auth_service.dart';
 import 'package:provider/provider.dart';
 
 import 'src/pages/splash_screen.dart';
 import 'src/services/firebase_options.dart';
 import 'src/services/prediction_service.dart';
+import 'src/services/search_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,6 +34,8 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider<PredictionService>(create: (_) => PredictionService()),
+        ChangeNotifierProvider(create: (_) => SearchService()),
+        ChangeNotifierProvider(create: (_) => AuthService()),
       ],
       child: MaterialApp(
         title: 'Auth App',

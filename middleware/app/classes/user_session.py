@@ -90,9 +90,53 @@ class UserSession:
     def clear_history(self):
         self.predictor.conversation_history = []
         logging.info(f"Cleared conversation history for user {self.user_id}")
+
+    def remove_last_word(self) -> str:
+        logging.debug(f"Removing last word for user: {self.user_id}. Current sentence: {self.current_sentence}")
+        if not self.current_sentence:
+            logging.debug("No words to remove.")
+            return ""
+
+        removed_word = self.current_sentence.pop()
+        logging.debug(f"Removed word: {removed_word}")
+
+        if self.predictor.conversation_history:
+            last_entry = self.predictor.conversation_history[-1]
+            if last_entry.startswith("(User):"):
+                words = last_entry.split()[1:]
+                if words:
+                    words.pop()
+                    if words:
+                        self.predictor.conversation_history[-1] = "(User): " + " ".join(words)
+                    else:
+                        self.predictor.conversation_history.pop()
+
+        if not self.current_sentence:
+            self.is_new_sentence = True
+
+        # Update word frequency
+        if len(self.current_sentence) > 0:
+            last_word = self.current_sentence[-1]
+            if last_word in self.predictor.word_frequency and removed_word in self.predictor.word_frequency[last_word]:
+                self.predictor.word_frequency[last_word][removed_word] -= 1
+                if self.predictor.word_frequency[last_word][removed_word] <= 0:
+                    del self.predictor.word_frequency[last_word][removed_word]
+
+        logging.debug(f"Updated current sentence: {self.current_sentence}. Word frequency: {self.predictor.word_frequency}")
+        return removed_word
+    
+    def get_autocomplete_predictions(self, input_text: str) -> List[str]:
+        return self.predictor.get_search_predictions(input_text)
     
     @classmethod
     def get_user_session(cls, user_id: str) -> 'UserSession':
         if user_id not in cls.sessions:
             cls.sessions[user_id] = cls(user_id)
         return cls.sessions[user_id]
+
+    @classmethod
+    def end_gemini_session(cls, user_id: str):
+        if user_id in cls.sessions:
+            cls.sessions[user_id].clear_history()
+            del cls.sessions[user_id]
+            logging.info(f"Ended Gemini session for user {user_id}")
