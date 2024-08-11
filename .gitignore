@@ -54,4 +54,4 @@ middleware/app/__pycache__
 middleware/app/classes/__pycache__
 middleware/app/routes/__pycache__
 middleware/app/services/__pycache__
-middleware/credentials
+middleware/credentials/firebase_options.json

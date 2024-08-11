@@ -27,6 +27,10 @@ class SearchRequest(BaseModel):
 def get_user_session(user_id: str):
     return UserSession.get_user_session(user_id)
 
+@router.post("/ping")
+def ping():
+    return 'pong'
+
 @router.post("/user_input")
 def user_input(request: UserRequest):
     session = UserSession.get_user_session(request.user_id)
