@@ -29,7 +29,7 @@ workflows:
           flutter clean
           flutter pub get
       - name: Build APK
-        script: flutter build apk --debug
+        script: flutter build apk --release
       - name: Build iOS
         script: flutter build ios --release --no-codesign
     artifacts:
