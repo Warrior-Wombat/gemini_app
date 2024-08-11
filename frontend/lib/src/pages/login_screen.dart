@@ -138,20 +138,6 @@ class _LoginScreenState extends State<LoginScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               SizedBox(height: 50),
-              Align(
-                alignment: Alignment.topLeft,
-                child: IconButton(
-                  icon: Icon(Icons.arrow_back, color: Colors.white),
-                  onPressed: () {
-                    Navigator.pop(context);
-                    setState(() {
-                      errorMessage = '';
-                      showError = false;
-                    });
-                  },
-                ),
-              ),
-              SizedBox(height: 50),
               Text(
                 'Log in to SaySpeak',
                 style: GoogleFonts.roboto(

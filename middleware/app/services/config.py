@@ -4,7 +4,6 @@ from firebase_admin import credentials, firestore
 import google.generativeai as genai
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
 from dotenv import load_dotenv
-from openai import OpenAI
 
 load_dotenv()
 
