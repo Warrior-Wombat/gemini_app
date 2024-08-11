@@ -1,13 +1,12 @@
 # Warrior-Wombat
 
-![Project Logo](./path/to/logo.png)
+![Project Logo](./frontend/images/sayspeak_circular_logo.png)
 
 ## Table of Contents
 
 1. [Frontend Setup](#frontend-setup)
 2. [Middleware Setup](#middleware-setup)
-3. [Contributing](#contributing)
-4. [License](#license)
+3. [License](#license)
 
 ## Frontend Setup
 
@@ -68,16 +67,12 @@
     - Obtain your API key from [Google Studio](https://studio.google.com/).
     - Add the following line to your `.env` file:
     ```env
-    GEMINI_API_KEY=your_gemini_api_key
+    GEMINI_API_KEY=gemini_key
     ```
 
 5. **Firebase Credentials:**
     - Place the Firebase Credentials JSON you get from Firebase into the `credentials` folder.
 
-## Contributing
-
-Contributions are welcome! Please read the [contributing guidelines](CONTRIBUTING.md) first.
-
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
+This project is licensed under the MIT License.
