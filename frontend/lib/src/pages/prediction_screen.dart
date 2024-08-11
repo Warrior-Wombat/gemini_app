@@ -23,6 +23,7 @@ class _PredictionScreenState extends State<PredictionScreen> with WidgetsBinding
   String userId = '';
   String lastWord = '';
   bool _isRecording = false;
+  bool _isLoading = false;
   Uint8List? _imageData;
   List<String> _imagePredictions = [];
   final AudioPlayer audioPlayer = AudioPlayer();
@@ -52,17 +53,51 @@ class _PredictionScreenState extends State<PredictionScreen> with WidgetsBinding
     }
   }
 
+  void _showRateLimitWarning() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Warning'),
+          content: Text('You are sending too many requests. Slow down!'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _callEndSession() async {
     await Provider.of<PredictionService>(context, listen: false).endSession(userId);
   }
 
-  void updatePredictions(String selectedWord) {
+  Future<void> updatePredictions(String selectedWord) async {
     setState(() {
+      _isLoading = true;
       collectedWords.add(selectedWord);
       lastWord = selectedWord;
     });
     _speakWord(selectedWord);
-    Provider.of<PredictionService>(context, listen: false).getPredictions(userId, lastWord);
+    try {
+      await Provider.of<PredictionService>(context, listen: false).getPredictions(userId, lastWord);
+    } catch (e) {
+      if (e.toString().contains('429')) {
+        _showRateLimitWarning();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to get predictions: $e')),
+        );
+      }
+    }
+    setState(() {
+      _isLoading = false;
+    });
     _scrollToEnd();
   }
 
@@ -294,15 +329,19 @@ class _PredictionScreenState extends State<PredictionScreen> with WidgetsBinding
     _speakWord(prediction);
     Provider.of<PredictionService>(context, listen: false).getPredictions(userId, lastWord);
   }
-
+  
   Future<void> _speakWord(String word) async {
     try {
       final audioBytes = await Provider.of<PredictionService>(context, listen: false).speakText(word);
       await audioPlayer.play(BytesSource(audioBytes));
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to speak word: $e')),
-      );
+      if (e.toString().contains('429')) {
+        _showRateLimitWarning();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to speak word: $e')),
+        );
+      }
     }
   }
 
@@ -500,9 +539,8 @@ class _PredictionScreenState extends State<PredictionScreen> with WidgetsBinding
                   if (index < predictionService.predictions.length) {
                     final prediction = predictionService.predictions[index];
                     return GestureDetector(
-                      onTap: () async {
-                        updatePredictions(prediction.word);
-                        await Future.delayed(Duration(milliseconds: 200));
+                      onTap: _isLoading ? null : () async {
+                        await updatePredictions(prediction.word);
                       },
                       child: Card(
                         shape: RoundedRectangleBorder(
@@ -512,20 +550,22 @@ class _PredictionScreenState extends State<PredictionScreen> with WidgetsBinding
                         elevation: 10,
                         color: Colors.black,
                         child: Center(
-                          child: Text(
-                            prediction.word,
-                            style: GoogleFonts.roboto(
-                              color: Colors.white,
-                              fontSize: 18,
-                            ),
-                          ),
+                          child: _isLoading
+                              ? CircularProgressIndicator()
+                              : Text(
+                                  prediction.word,
+                                  style: GoogleFonts.roboto(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                  ),
+                                ),
                         ),
                       ),
                     );
                   } else {
                     final punctuation = punctuationTiles[index - predictionService.predictions.length];
                     return GestureDetector(
-                      onTap: () {
+                      onTap: _isLoading ? null : () {
                         addPunctuation(punctuation);
                       },
                       child: Card(
@@ -555,7 +595,7 @@ class _PredictionScreenState extends State<PredictionScreen> with WidgetsBinding
               child: ElevatedButton.icon(
                 icon: Icon(Icons.send),
                 label: Text('Send'),
-                onPressed: sendContext,
+                onPressed: _isLoading ? null : sendContext,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blueAccent,
                   foregroundColor: Colors.white,
