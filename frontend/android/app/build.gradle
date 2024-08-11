@@ -29,7 +29,6 @@ if (flutterVersionName == null) {
 android {
     namespace = "com.example.gemini_app"
     compileSdkVersion 34
-    // compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

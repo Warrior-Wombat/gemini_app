@@ -21,8 +21,13 @@ workflows:
           echo "flutter.buildMode=release" >> $CM_BUILD_DIR/android/local.properties
           echo "flutter.versionName=1.0.0" >> $CM_BUILD_DIR/android/local.properties
           echo "flutter.versionCode=1" >> $CM_BUILD_DIR/android/local.properties
-      - name: Install dependencies
-        script: flutter pub get
+      - name: Update dependencies
+        script: |
+          flutter pub upgrade
+      - name: Clean build
+        script: |
+          flutter clean
+          flutter pub get
       - name: Build APK
         script: flutter build apk --release
       - name: Build iOS
