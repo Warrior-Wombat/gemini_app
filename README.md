@@ -30,7 +30,9 @@
     ```env
     OPENAI_API_KEY=your_openai_api_key
     ELEVENLABS_API_KEY=your_elevenlabs_api_key
+    BASE_URL=your_base_url
     ```
+    (Note that the BASE_URL is the URL of the server, which can be either localhost or your computer's IP address)
 
 4. **Enable Environment Variables in pubspec.yaml:**
     Uncomment the `.env` dependency in `pubspec.yaml`.

@@ -16,7 +16,7 @@ import 'package:record/record.dart';
 import '../models/prediction.dart';
 
 class PredictionService extends ChangeNotifier {
-  final String baseUrl = 'http://192.168.0.197:5000/autocomplete';
+  final String? baseUrl = dotenv.env['BASE_URL'];
   final Logger _logger = Logger();
   final _audioRecorder = AudioRecorder();
   String? _audioPath;
