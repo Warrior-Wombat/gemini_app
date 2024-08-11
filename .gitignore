@@ -45,6 +45,7 @@ frontend/android/app/release
 # config and env stuff
 frontend/assets/credentials
 frontend/.env
+frontend/lib/src/services/firebase_options.dart
 
 # MIDDLEWARE
 middleware/venv
