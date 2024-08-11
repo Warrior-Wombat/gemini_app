@@ -1,20 +1,20 @@
 # Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
-.DS_Store
-.atom/
-.buildlog/
-.history
-.svn/
-migrate_working_dir/
+frontend/*.class
+frontend/*.log
+frontend/*.pyc
+frontend/*.swp
+frontend/.DS_Store
+frontend/.atom/
+frontend/.buildlog/
+frontend/.history
+frontend/.svn/
+frontend/migrate_working_dir/
 
 # IntelliJ related
-*.iml
-*.ipr
-*.iws
-.idea/
+frontend/*.iml
+frontend/*.ipr
+frontend/*.iws
+frontend/.idea/
 
 # The .vscode folder contains launch configuration and tasks you configure in
 # VS Code which you may wish to be included in version control, so this line
@@ -49,3 +49,7 @@ frontend/.env
 # MIDDLEWARE
 middleware/venv
 middleware/.env
+middleware/app/__pycache__
+middleware/app/classes/__pycache__
+middleware/app/routes/__pycache__
+middleware/app/services/__pycache__
