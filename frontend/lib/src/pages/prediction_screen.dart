@@ -326,7 +326,6 @@ class _PredictionScreenState extends State<PredictionScreen> with WidgetsBinding
 
   void _handleIconSelected(Function action) {
     action();
-    _toggleExpanded();
   }
 
   Future<void> _logOut() async {
@@ -359,59 +358,89 @@ class _PredictionScreenState extends State<PredictionScreen> with WidgetsBinding
             duration: Duration(milliseconds: 300),
             curve: Curves.easeInOut,
             width: _isExpanded ? screenWidth * 0.8 : 48,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                if (_isExpanded)
-                  IconButton(
-                    icon: Icon(Icons.logout),
-                    onPressed: _logOut,
-                    color: Colors.white,
-                  ),
-                if (_isExpanded)
-                  IconButton(
-                    icon: Icon(Icons.search),
-                    onPressed: () => _handleIconSelected(() {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => ChangeNotifierProvider<SearchService>(
-                            create: (_) => SearchService(),
-                            child: SearchScreen(
-                              userId: userId,
-                              onSuggestionSelected: (selectedSuggestion) {
-                                updatePredictions(selectedSuggestion);
-                              },
+            alignment: _isExpanded ? Alignment.centerRight : Alignment.center, // Add this line
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  if (_isExpanded)
+                    Flexible(
+                      fit: FlexFit.loose,
+                      child: IconButton(
+                        icon: Icon(Icons.logout),
+                        onPressed: _logOut,
+                        color: Colors.white,
+                      ),
+                    ),
+                  if (_isExpanded)
+                    Flexible(
+                      fit: FlexFit.loose,
+                      child: IconButton(
+                        icon: Icon(Icons.search),
+                        onPressed: () => _handleIconSelected(() {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => ChangeNotifierProvider<SearchService>(
+                                create: (_) => SearchService(),
+                                child: SearchScreen(
+                                  userId: userId,
+                                  onSuggestionSelected: (selectedSuggestion) {
+                                    updatePredictions(selectedSuggestion);
+                                  },
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
+                          );
+                        }),
+                        color: Colors.white,
+                      ),
+                    ),
+                  if (_isExpanded)
+                    Flexible(
+                      fit: FlexFit.loose,
+                      child: IconButton(
+                        icon: Icon(Icons.camera_alt),
+                        onPressed: () => _handleIconSelected(_captureImage),
+                        color: Colors.white,
+                      ),
+                    ),
+                  if (_isExpanded)
+                    Flexible(
+                      fit: FlexFit.loose,
+                      child: IconButton(
+                        icon: Icon(Icons.photo),
+                        onPressed: () => _handleIconSelected(_pickImage),
+                        color: Colors.white,
+                      ),
+                    ),
+                  if (_isExpanded)
+                    Flexible(
+                      fit: FlexFit.loose,
+                      child: IconButton(
+                        icon: Icon(_isRecording ? Icons.stop_circle_outlined : Icons.mic),
+                        onPressed: () => _handleIconSelected(_toggleRecording),
+                        color: Colors.white,
+                      ),
+                    ),
+                  AnimatedSwitcher(
+                    duration: Duration(milliseconds: 300),
+                    transitionBuilder: (Widget child, Animation<double> animation) {
+                      return RotationTransition(
+                        turns: child.key == ValueKey('close') ? Tween(begin: 0.0, end: 0.25).animate(animation) : animation,
+                        child: child,
                       );
-                    }),
-                    color: Colors.white,
+                    },
+                    child: IconButton(
+                      key: ValueKey(_isExpanded ? 'close' : 'add'),
+                      icon: Icon(_isExpanded ? Icons.close : Icons.add_circle),
+                      onPressed: _toggleExpanded,
+                      color: Colors.white,
+                    ),
                   ),
-                if (_isExpanded)
-                  IconButton(
-                    icon: Icon(Icons.camera_alt),
-                    onPressed: () => _handleIconSelected(_captureImage),
-                    color: Colors.white,
-                  ),
-                if (_isExpanded)
-                  IconButton(
-                    icon: Icon(Icons.photo),
-                    onPressed: () => _handleIconSelected(_pickImage),
-                    color: Colors.white,
-                  ),
-                if (_isExpanded)
-                  IconButton(
-                    icon: Icon(_isRecording ? Icons.stop_circle_outlined : Icons.mic),
-                    onPressed: () => _handleIconSelected(_toggleRecording),
-                    color: Colors.white,
-                  ),
-                IconButton(
-                  icon: Icon(_isExpanded ? Icons.close : Icons.add_circle),
-                  onPressed: _toggleExpanded,
-                  color: Colors.white,
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],

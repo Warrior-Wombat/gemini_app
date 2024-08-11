@@ -6,19 +6,19 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter_sound/flutter_sound.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:logger/logger.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:record/record.dart';
 
 import '../models/prediction.dart';
 
 class PredictionService extends ChangeNotifier {
   final String baseUrl = 'http://192.168.0.197:5000/autocomplete';
   final Logger _logger = Logger();
-  final FlutterSoundRecorder _audioRecorder = FlutterSoundRecorder();
+  final _audioRecorder = AudioRecorder();
   String? _audioPath;
   bool _isRecording = false;
   List<Prediction> _predictions = [];
@@ -30,7 +30,7 @@ class PredictionService extends ChangeNotifier {
   }
 
   Future<void> _initializeRecorder() async {
-    await _audioRecorder.openRecorder();
+    // No initialization needed for the record package
   }
 
   Future<bool> _requestMicrophonePermission() async {
@@ -48,15 +48,15 @@ class PredictionService extends ChangeNotifier {
 
         _logger.i('Starting recording with permission granted.');
 
-        await _audioRecorder.startRecorder(
-          toFile: _audioPath,
-          codec: Codec.pcm16WAV,
-          sampleRate: 16000,
-          bitRate: 16000,
-        );
+        if (_audioPath != null) {
+          await _audioRecorder.start(const RecordConfig(), path: '$_audioPath');
 
-        _isRecording = true;
-        _logger.i('Recording started in memory');
+          _isRecording = true;
+          _logger.i('Recording started in memory');
+        } else {
+          _logger.e('Audio path is null');
+          throw Exception('Audio path is null');
+        }
       } catch (e) {
         _logger.e('Failed to start recording: $e');
         throw Exception('Failed to start recording: $e');
@@ -74,7 +74,7 @@ class PredictionService extends ChangeNotifier {
     }
 
     try {
-      await _audioRecorder.stopRecorder();
+      await _audioRecorder.stop();
       _isRecording = false;
       _logger.i('Recording stopped, audio file path: $_audioPath');
 
@@ -247,6 +247,7 @@ class PredictionService extends ChangeNotifier {
       throw Exception('Failed to end session');
     }
   }
+  
   Future<Uint8List> speakText(String text) async {
     final apiKey = dotenv.env['ELEVENLABS_API_KEY'];
     final voiceId = 'EXAVITQu4vr4xnSDxMaL';
@@ -301,7 +302,7 @@ class PredictionService extends ChangeNotifier {
       throw Exception('Error deleting word: $e');
     }
   }
-  
+
   Future<void> sendContext(String userId, String context) async {
     try {
       if (context == '') return; // elevenlabs breathes for some reason when no text is put in
@@ -318,7 +319,7 @@ class PredictionService extends ChangeNotifier {
 
   @override
   Future<void> dispose() async {
-    await _audioRecorder.closeRecorder();
+    await _audioRecorder.dispose();
     await endSession(FirebaseAuth.instance.currentUser?.uid ?? 'unauthenticated');
     super.dispose();
   }
