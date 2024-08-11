@@ -13,6 +13,9 @@ workflows:
         script: |
           echo "OPENAI_API_KEY=${OPENAI_API_KEY}" > .env
           echo "ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY}" >> .env
+      - name: Set up SDK version
+        script: |
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > $CM_BUILD_DIR/android/local.properties
       - name: Install dependencies
         script: flutter pub get
       - name: Build APK
