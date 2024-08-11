@@ -11,5 +11,6 @@ COPY . /app
 
 EXPOSE 8080
 ENV PORT 8080
+ENTRYPOINT ["./entrypoint.sh"]
 
 CMD ["python", "run.py"]
