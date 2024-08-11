@@ -5,5 +5,22 @@ steps:
 - name: 'gcr.io/cloud-builders/docker'
   args: ['build', '-t', 'gcr.io/sayspeak/middleware:$SHORT_SHA', './middleware']
 
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/sayspeak/middleware:$SHORT_SHA']
+
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: 'gcloud'
+  args:
+  - 'run'
+  - 'deploy'
+  - 'gemini-cloud-run-service'
+  - '--image'
+  - 'gcr.io/sayspeak/middleware:$SHORT_SHA'
+  - '--region'
+  - 'us-central1'
+  - '--platform'
+  - 'managed'
+  - '--allow-unauthenticated'
+
 images:
 - 'gcr.io/sayspeak/middleware:$SHORT_SHA'
