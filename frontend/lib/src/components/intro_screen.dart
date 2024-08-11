@@ -32,11 +32,10 @@ class IntroScreen extends StatelessWidget {
                   '- Button 2: Does that...',
                   style: TextStyle(fontSize: 16),
                 ),
-                // Add more descriptions as needed
                 SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () {
-                    Navigator.of(context).pop();  // Close the intro screen
+                    Navigator.of(context).pop();
                   },
                   child: Text('Got it!'),
                 ),

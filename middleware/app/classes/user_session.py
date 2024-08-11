@@ -113,8 +113,6 @@ class UserSession:
 
         if not self.current_sentence:
             self.is_new_sentence = True
-
-        # Update word frequency
         if len(self.current_sentence) > 0:
             last_word = self.current_sentence[-1]
             if last_word in self.predictor.word_frequency and removed_word in self.predictor.word_frequency[last_word]:

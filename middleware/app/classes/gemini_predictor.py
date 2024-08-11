@@ -40,8 +40,6 @@ class GeminiPredictor:
             Suggest 9 words that would be most relevant and helpful for the user (User) to communicate next. Please note that these words are not all meant to piece together a sentence - each of these 9 words are contesting to fill up the same word slot, sort of like a phone's ngram autocomplete. NEVER SUGGEST OR LIST ANY PUNCTUATION MARKS THAT END A SENTENCE WHATSOEVER. Apostrophes/contractions are fine.
             Consider the conversation flow, topic, and user's communication style.
             Respond with only the suggestions, separated by commas, without any additional text."""
-
-        # Log the prompt being passed to the Gemini API
         logging.info(f"Prompt being passed to Gemini API:\nUser Prompt: {user_prompt}")
 
         try:
@@ -127,8 +125,6 @@ class GeminiPredictor:
         Suggest 9 words that would be most relevant and helpful for the user (User) to communicate next.
         Consider the conversation flow, topic, and user's communication style.
         Respond with only the suggestions, separated by commas, without any additional text."""
-
-        # Log the prompt being passed to the Gemini API for the taker response
         logging.info(f"Prompt being passed to Gemini API for taker response:\nUser Prompt: {user_prompt}")
 
         try:
@@ -160,8 +156,6 @@ class GeminiPredictor:
             ]
 
             response = self.chat_model.generate_content(content, safety_settings=SAFETY_SETTINGS)
-
-            # Extract and process the text from the response
             if response.candidates and response.candidates[0].content.parts:
                 text = response.candidates[0].content.parts[0].text
                 predictions = [word.strip() for word in text.split(',') if word.strip()]
@@ -194,11 +188,7 @@ class GeminiPredictor:
             if not text:
                 logging.warning("Gemini API returned an empty response for autocomplete predictions")
                 return self.get_default_predictions(k, is_new_sentence=False)
-
-            # Process the response to extract suggestions
             suggestions = [suggestion.strip() for suggestion in text.split(',') if suggestion.strip() and not any(punct in suggestion for punct in ['.', '!', '?'])]
-            
-            # Ensure the suggestions list does not exceed the soft limit
             suggestions = suggestions[:k]
             
             return suggestions

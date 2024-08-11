@@ -358,7 +358,7 @@ class _PredictionScreenState extends State<PredictionScreen> with WidgetsBinding
             duration: Duration(milliseconds: 300),
             curve: Curves.easeInOut,
             width: _isExpanded ? screenWidth * 0.8 : 48,
-            alignment: _isExpanded ? Alignment.centerRight : Alignment.center, // Add this line
+            alignment: _isExpanded ? Alignment.centerRight : Alignment.center,
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(

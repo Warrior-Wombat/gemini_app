@@ -25,14 +25,6 @@ class PredictionService extends ChangeNotifier {
 
   List<Prediction> get predictions => _predictions;
 
-  PredictionService() {
-    _initializeRecorder();
-  }
-
-  Future<void> _initializeRecorder() async {
-    // No initialization needed for the record package
-  }
-
   Future<bool> _requestMicrophonePermission() async {
     PermissionStatus status = await Permission.microphone.request();
     return status.isGranted;

@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../components/auth_button.dart';
 import '../services/auth_service.dart';
-import 'info_screen.dart'; // Import the InfoScreen
+import 'info_screen.dart';
 import 'prediction_screen.dart';
 import 'signup_screen.dart';
 
@@ -209,19 +209,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Text(
                     errorMessage,
                     style: TextStyle(color: Colors.red),
-                  ),
-                ),
-              ),
-              SizedBox(height: 16),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () {
-                    // Handle password reset
-                  },
-                  child: Text(
-                    'Forgot Password?',
-                    style: TextStyle(color: Colors.green),
                   ),
                 ),
               ),

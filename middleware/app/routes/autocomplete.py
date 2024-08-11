@@ -63,7 +63,6 @@ def end_session(request: EndRequest):
 def label_response(request: LabelResponseRequest):
     session = UserSession.get_user_session(request.user_id)
     response = session.label_response(request.transcription)
-    # return predictions from processing
     return {"predictions": response['predictions']}
 
 @router.post("/remove_word")
