@@ -71,7 +71,7 @@
     ```
 
 5. **Firebase Credentials:**
-    - Place the Firebase Credentials JSON you get from Firebase into the `credentials` folder.
+    - Create a `credentials` folder inside the `middleware` folder. Place the Firebase Credentials JSON you get from Firebase into the `credentials` folder.
 
 ## License
 
