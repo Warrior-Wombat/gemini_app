@@ -28,6 +28,9 @@ steps:
   - '--platform'
   - 'managed'
   - '--allow-unauthenticated'
-
+  - '--memory'
+  - '128Mi'
+  - '--cpu'
+  - '1'
 images:
 - 'gcr.io/sayspeak/middleware:$SHORT_SHA'
