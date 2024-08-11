@@ -2,6 +2,13 @@ options:
   logging: CLOUD_LOGGING_ONLY
 
 steps:
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  args:
+  - '-c'
+  - |
+    apt-get update && apt-get install -y build-essential
+
 - name: 'gcr.io/cloud-builders/docker'
   args: ['build', '-t', 'gcr.io/sayspeak/middleware:$SHORT_SHA', './middleware']
 
