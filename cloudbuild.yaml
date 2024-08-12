@@ -20,6 +20,7 @@ steps:
   args:
   - '-c'
   - |
+    export $(cat ./middleware/.env | grep -v '^#' | xargs) && \
     gcloud run deploy gemini-cloud-run-service \
       --image gcr.io/sayspeak/middleware:$SHORT_SHA \
       --region us-central1 \
