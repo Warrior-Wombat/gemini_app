@@ -12,11 +12,8 @@ cred = credentials.Certificate("credentials/firebase_credentials.json")
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 
-gemini_api_key = os.environ.get('GEMINI_API_KEY')
-if not gemini_api_key:
-    raise ValueError("GEMINI_API_KEY environment variable is not set")
-
-genai.configure(api_key=gemini_api_key)
+# genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
+genai.configure(api_key='AIzaSyACvTC2a4fWn06wDvj9nCfViXLtUiCJ7lo') # need hardcoded for gcr
 model = genai.GenerativeModel(model_name='gemini-1.5-flash')
 
 # disabling safety settings because it doesn't make sense to reject transcriptions for something that someone else said.
