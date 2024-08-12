@@ -9,8 +9,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . /app
 
+RUN chmod +x /app/entrypoint.sh
+
 EXPOSE 8080
 ENV PORT 8080
-ENTRYPOINT ["./entrypoint.sh"]
 
+ENTRYPOINT ["./entrypoint.sh"]
 CMD ["python", "run.py"]
