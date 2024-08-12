@@ -1,6 +1,5 @@
 # Warrior-Wombat
 **Sayspeak**
-**Switch to release branch if you want preconfigured copy!**
 ![Project Logo](./frontend/images/sayspeak_circular_logo.png)
 
 ## Table of Contents
