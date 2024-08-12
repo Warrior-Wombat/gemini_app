@@ -102,20 +102,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               SizedBox(height: 50),
-              Align(
-                alignment: Alignment.topLeft,
-                child: IconButton(
-                  icon: Icon(Icons.arrow_back, color: Colors.white),
-                  onPressed: () {
-                    Navigator.pop(context);
-                    setState(() {
-                      errorMessage = '';
-                      showError = false;
-                    });
-                  },
-                ),
-              ),
-              SizedBox(height: 50),
               Text(
                 'Get your free account',
                 style: GoogleFonts.roboto(
