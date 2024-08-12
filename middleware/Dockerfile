@@ -13,5 +13,4 @@ EXPOSE 8080
 ENV PORT=8080
 ENV GEMINI_API_KEY=IzaSyACvTC2a4fWn06wDvj9nCfViXLtUiCJ7lo
 
-ENTRYPOINT ["./entrypoint.sh"]
 CMD ["python", "run.py"]
