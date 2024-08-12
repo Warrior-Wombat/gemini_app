@@ -10,27 +10,24 @@ steps:
     apt-get update && apt-get install -y build-essential python3-dev gcc g++ portaudio19-dev
 
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'gcr.io/sayspeak/middleware:$SHORT_SHA', './middleware']
+  args: ['build', '-t', 'gcr.io/sayspeak/middleware:$SHORT_SHA', '-f', './middleware/Dockerfile', './middleware']
 
 - name: 'gcr.io/cloud-builders/docker'
   args: ['push', 'gcr.io/sayspeak/middleware:$SHORT_SHA']
 
-- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-  entrypoint: 'gcloud'
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
   args:
-  - 'run'
-  - 'deploy'
-  - 'gemini-cloud-run-service'
-  - '--image'
-  - 'gcr.io/sayspeak/middleware:$SHORT_SHA'
-  - '--region'
-  - 'us-central1'
-  - '--platform'
-  - 'managed'
-  - '--allow-unauthenticated'
-  - '--memory'
-  - '256Mi'
-  - '--cpu'
-  - '1'
+  - '-c'
+  - |
+    gcloud run deploy gemini-cloud-run-service \
+      --image gcr.io/sayspeak/middleware:$SHORT_SHA \
+      --region us-central1 \
+      --platform managed \
+      --allow-unauthenticated \
+      --memory 256Mi \
+      --cpu 1 \
+      --set-env-vars "$(cat ./middleware/.env | xargs)"
+
 images:
 - 'gcr.io/sayspeak/middleware:$SHORT_SHA'
