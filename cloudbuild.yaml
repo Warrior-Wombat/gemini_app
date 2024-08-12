@@ -29,7 +29,7 @@ steps:
   - 'managed'
   - '--allow-unauthenticated'
   - '--memory'
-  - '128Mi'
+  - '256Mi'
   - '--cpu'
   - '1'
 images:
