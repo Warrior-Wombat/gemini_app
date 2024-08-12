@@ -8,11 +8,13 @@ workflows:
       xcode: latest
       groups:
         - api-keys
+        - endpoints
     scripts:
       - name: Create .env file
         script: |
           echo "OPENAI_API_KEY=${OPENAI_API_KEY}" > .env
           echo "ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY}" >> .env
+          echo "BASE_URL=${BASE_URL}" >> .env
       - name: Set up SDK version
         script: |
           mkdir -p $CM_BUILD_DIR/android
@@ -39,4 +41,3 @@ workflows:
       email:
         recipients:
           - sethchangcom@gmail.com
-          - dmathews7852@gmail.com
