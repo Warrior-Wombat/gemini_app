@@ -78,3 +78,5 @@
 ## License
 
 This project is licensed under the MIT License.
+
+P.S. All credentials have been revoked. ;)
